@@ -10,6 +10,7 @@ import android.hardware.SensorManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import com.google.firebase.database.*
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_signup.*
 import java.util.*
@@ -20,14 +21,28 @@ class SignupActivity : AppCompatActivity() , SensorEventListener {
     var latitude: Double = 0.0
     var longitude: Double = 0.0
     val r = Random()
+    lateinit var dataReference: DatabaseReference
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_signup)
+        dataReference = FirebaseDatabase.getInstance().getReference("user")
+
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         lastUpdate = System.currentTimeMillis()
+
+        dataReference.addValueEventListener(object: ValueEventListener {
+            override fun onCancelled(p0: DatabaseError?) {
+
+            }
+
+            override fun onDataChange(dataSnapshot: DataSnapshot?) {
+
+            }
+        })
 
         ran.setOnClickListener {
 
@@ -44,7 +59,13 @@ class SignupActivity : AppCompatActivity() , SensorEventListener {
                 //
             }else{
                 //add to database
-                finish()
+                val messageId = dataReference.push().key
+                val messageData = User(messageId, signup_user.text.toString(), signup_pass.text.toString(), latitude, longitude)
+                dataReference.child(messageId).setValue(messageData).addOnCompleteListener {
+                    Toast.makeText(applicationContext, "Message save successfully", Toast.LENGTH_SHORT).show()
+
+                    finish()
+                }
             }
         }
     }
